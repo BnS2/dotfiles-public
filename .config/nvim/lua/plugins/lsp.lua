@@ -6,11 +6,11 @@ return {
 			vim.list_extend(opts.ensure_installed, {
 				"stylua",
 				"selene",
-				"luacheck",
+				-- luacheck omitted: it needs luarocks/lua5.1, and selene already
+				-- covers Lua linting here
 				"shellcheck",
 				"shfmt",
 				"tailwindcss-language-server",
-				"typescript-language-server",
 				"css-lsp",
 			})
 		end,
@@ -21,40 +21,43 @@ return {
 		"neovim/nvim-lspconfig",
 		opts = {
 			inlay_hints = { enabled = false },
-			---@type lspconfig.options
 			servers = {
+				-- Keymaps for every server. Merged with the LazyVim defaults,
+				-- so this only overrides `gd`.
+				["*"] = {
+					keys = {
+						{
+							"gd",
+							function()
+								-- DO NOT REUSE WINDOW
+								LazyVim.pick("lsp_definitions", { reuse_win = false })()
+							end,
+							desc = "Goto Definition",
+							has = "definition",
+						},
+					},
+				},
 				cssls = {},
 				tailwindcss = {
-					root_dir = function(...)
-						return require("lspconfig.util").root_pattern(".git")(...)
+					-- Use the git root, so Tailwind also works in monorepos and
+					-- v4 projects that have no tailwind.config.* file.
+					root_dir = function(bufnr, on_dir)
+						on_dir(vim.fs.root(bufnr, ".git") or vim.fn.getcwd())
 					end,
 				},
-				tsserver = {
-					root_dir = function(...)
-						return require("lspconfig.util").root_pattern(".git")(...)
-					end,
-					single_file_support = false,
+				-- LazyVim's typescript extra runs `vtsls` (tsserver/ts_ls are disabled
+				-- by it), and its defaults already match the TypeScript inlay hints
+				-- that used to live here. Only the JavaScript deltas are set below.
+				vtsls = {
 					settings = {
-						typescript = {
-							inlayHints = {
-								includeInlayParameterNameHints = "literal",
-								includeInlayParameterNameHintsWhenArgumentMatchesName = false,
-								includeInlayFunctionParameterTypeHints = true,
-								includeInlayVariableTypeHints = false,
-								includeInlayPropertyDeclarationTypeHints = true,
-								includeInlayFunctionLikeReturnTypeHints = true,
-								includeInlayEnumMemberValueHints = true,
-							},
-						},
 						javascript = {
 							inlayHints = {
-								includeInlayParameterNameHints = "all",
-								includeInlayParameterNameHintsWhenArgumentMatchesName = false,
-								includeInlayFunctionParameterTypeHints = true,
-								includeInlayVariableTypeHints = true,
-								includeInlayPropertyDeclarationTypeHints = true,
-								includeInlayFunctionLikeReturnTypeHints = true,
-								includeInlayEnumMemberValueHints = true,
+								parameterNames = { enabled = "all" },
+								parameterTypes = { enabled = true },
+								variableTypes = { enabled = true },
+								propertyDeclarationTypes = { enabled = true },
+								functionLikeReturnTypes = { enabled = true },
+								enumMemberValues = { enabled = true },
 							},
 						},
 					},
@@ -69,7 +72,7 @@ return {
 				},
 				lua_ls = {
 					-- enabled = false,
-					single_file_support = true,
+					workspace_required = false,
 					settings = {
 						Lua = {
 							workspace = {
@@ -135,22 +138,5 @@ return {
 			},
 			setup = {},
 		},
-	},
-	{
-		"neovim/nvim-lspconfig",
-		opts = function()
-			local keys = require("lazyvim.plugins.lsp.keymaps").get()
-			vim.list_extend(keys, {
-				{
-					"gd",
-					function()
-						-- DO NOT RESUSE WINDOW
-						require("telescope.builtin").lsp_definitions({ reuse_win = false })
-					end,
-					desc = "Goto Definition",
-					has = "definition",
-				},
-			})
-		end,
 	},
 }

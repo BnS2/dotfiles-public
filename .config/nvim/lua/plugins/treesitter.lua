@@ -1,9 +1,8 @@
 return {
-	{ "nvim-treesitter/playground", cmd = "TSPlaygroundToggle" },
-
 	{
 		"nvim-treesitter/nvim-treesitter",
-		build = ":TSUpdate",
+		-- Extra parsers on top of the LazyVim defaults (`ensure_installed` is
+		-- opts_extend'ed by LazyVim, so this list is appended, not replacing).
 		opts = {
 			ensure_installed = {
 				"astro",
@@ -22,47 +21,10 @@ return {
 				"sql",
 				"svelte",
 			},
-
-			-- matchup = {
-			-- 	enable = true,
-			-- },
-
-			-- https://github.com/nvim-treesitter/playground#query-linter
-			query_linter = {
-				enable = true,
-				use_virtual_text = true,
-				lint_events = { "BufWrite", "CursorHold" },
-			},
-
-			playground = {
-				enable = true,
-				disable = {},
-				updatetime = 25, -- Debounced time for highlighting nodes in the playground from source code
-				persist_queries = true, -- Whether the query persists across vim sessions
-				keybindings = {
-					toggle_query_editor = "o",
-					toggle_hl_groups = "i",
-					toggle_injected_languages = "t",
-					toggle_anonymous_nodes = "a",
-					toggle_language_display = "I",
-					focus_language = "f",
-					unfocus_language = "F",
-					update = "R",
-					goto_node = "<cr>",
-					show_help = "?",
-				},
-			},
 		},
-		config = function(_, opts)
-			local TS = require("nvim-treesitter")
-			TS.setup(opts)
-
-			-- MDX
-			vim.filetype.add({
-				extension = {
-					mdx = "mdx",
-				},
-			})
+		init = function()
+			-- MDX: highlight with the markdown parser (filetype is registered in
+			-- lua/config/options.lua)
 			vim.treesitter.language.register("markdown", "mdx")
 		end,
 	},

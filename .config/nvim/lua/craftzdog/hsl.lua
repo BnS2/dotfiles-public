@@ -78,7 +78,7 @@ function M.hslToRgb(h, s, l)
 	if s == 0 then
 		r, g, b = l, l, l -- achromatic
 	else
-		function hue2rgb(p, q, t)
+		local function hue2rgb(p, q, t)
 			if t < 0 then
 				t = t + 1
 			end
